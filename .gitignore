@@ -1,5 +1,8 @@
 # Ignore all compiled executables
 *.exe
 
+# Ignore the task save file produced by tasktracker
+tasks.json
+
 # VS Code specific files
 .vscode/*
