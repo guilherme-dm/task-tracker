@@ -117,7 +117,58 @@ int main(int argc, char *argv[]) {
             }
         }   
     }
-    
+    // If the user puts the "remove" argument, execute logic 
+    else if (strcmp(argv[1], "remove") == 0) {
+
+        // If the user puts no task name argument, show helper text
+        if (argv[2] == NULL) {
+            printf("\n\tYou must enter a task title after the \"remove\" argument.\n");
+            printf("\n\tExample: tasktracker remove \"Your task name\"\n");
+            return 0;
+        }
+        // If the user inputs arguments properly, remove task from file
+        else {
+
+            // If the file doesn't exist, print a warn the user
+            if (fopen("tasks.json", "r") == NULL) {
+                printf("\tThere are no file with saved tasks.\n");
+            }
+            // If the file exists, remove task from file
+            else {
+                
+                // Parses the json file into a cjson object to be edited
+                char *fptr = fileToString("tasks.json");
+                cJSON *jsonString = cJSON_Parse(fptr);
+
+                // Go through task objects and find one with a specific ID inputed by the user
+                int arrSize = cJSON_GetArraySize(jsonString);
+                int deleteTarget = atoi(argv[2]);                   // The task ID the user inputted to be deleted
+                for (int i = 0; i < arrSize; i++) {
+
+                    // Checks the id of the current object in the loop
+                    cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                    cJSON *id_key = cJSON_GetObjectItemCaseSensitive(obj, "task-id");
+
+                    // If it matches the id the user inputted, delete the object, rewrite file and then prints feedback to user, then returns
+                    if (deleteTarget == id_key->valueint) {
+                        cJSON_DeleteItemFromArray(jsonString, i);
+
+                        char *json_str = cJSON_Print(jsonString);
+                        FILE *fptr = fopen("tasks.json", "w");
+                        fprintf(fptr, json_str);
+
+                        printf("\tTask with id %d deleted.\n", deleteTarget);
+                        return 0;
+                    } 
+                }
+
+                // If no task with given id is found, print feedback to user and quit
+                printf("\tError: No task found with the given ID.\n");
+                return 0;
+            }
+        }
+    }
+
     return 0;
 }
 
