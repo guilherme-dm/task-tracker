@@ -11,15 +11,55 @@ int main(int argc, char *argv[]) {
 
     // If the user puts no arguments, just print help text
     if (argc <= 1) {
-        printf("\n\tTaskTracker helps you with daily tasks!\n");
+        printf("\n\tTaskTracker helps you keeping track of tasks!\n");
 
         printf("\n\tArguments/Options:\n");
+        printf("\t  list\t\t\t\tLists all tasks\n");
         printf("\t  add <TASKTITLE>\t\tAdds a task with the chosen title.\n");
+        printf("\t  remove <TASKID>\t\tRemoves the task with the chosen ID.\n");
 
         printf("\n\tExamples:\n");
+        printf("\t  tasktracker list\n");
         printf("\t  tasktracker add \"Wash clothes\"\n");
+        printf("\t  tasktracker remove 1\n");
 
         return 0;
+    }
+    else if (strcmp(argv[1], "list") == 0) {
+
+        // If the file doesn't exist, print a warning to the user
+        if (fopen("tasks.json", "r") == NULL) {
+            printf("\tThere are no saved tasks.\n");
+        }
+        // Otherwise, list tasks
+        else {
+
+            // Parses the json file into a cjson object to be iterated and printed
+            char *fptr = fileToString("tasks.json");
+            cJSON *jsonString = cJSON_Parse(fptr);
+
+            // Prints "table headers" for the tasks to be printed below
+            printf("\n\t\tID   Task                                         Status   Created\n");
+            printf("\t\t-------------------------------------------------------------------------------\n");
+
+            // Iterate over task objects and prints them
+            int arrSize = cJSON_GetArraySize(jsonString);
+            for (int i = 0; i < arrSize; i++) {
+
+                // Extracts data from JSON properties to print later
+                cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                cJSON *id = cJSON_GetObjectItemCaseSensitive(obj, "task-id");
+                cJSON *title = cJSON_GetObjectItemCaseSensitive(obj, "title");
+                cJSON *status = cJSON_GetObjectItemCaseSensitive(obj, "status");
+                cJSON *createdAt = cJSON_GetObjectItemCaseSensitive(obj, "createdAt");
+
+                // Prints this current task to terminal (formatted for alignment with table headers)
+                printf("\t\t%-5d%-45.43s%-9s%s\n", id->valueint, title->valuestring, status->valuestring, createdAt->valuestring);
+                
+            }
+
+            return 0;
+        }
     }
     // If the user puts the "add" argument, execute logic 
     else if (strcmp(argv[1], "add") == 0) {
@@ -30,7 +70,7 @@ int main(int argc, char *argv[]) {
             printf("\n\tExample: tasktracker add \"Your task name\"\n");
             return 0;
         }
-        // If the user inputs arguments properly add task to file
+        // If the user inputs arguments properly, add task to file
         else {
 
             // If the file doesn't exist, creates a file with the first task
@@ -93,7 +133,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Composes the object by adding the first task properties to it
-                cJSON_AddNumberToObject(json, "task-id", highestId + 1);   // Increments the highestId to get a unique ID. TODO usar UUID
+                cJSON_AddNumberToObject(json, "task-id", highestId + 1);   // Increments the highestId to get a unique ID. TODO use UUID?
                 cJSON_AddStringToObject(json, "title", argv[2]);
                 cJSON_AddStringToObject(json, "status", "to-do");
 
@@ -106,7 +146,7 @@ int main(int argc, char *argv[]) {
                 // Adds the task object created above into the existing file array 
                 cJSON_AddItemToArray(jsonString, json);
 
-                // Overwrites the json file with the added task, then return
+                // Overwrites the json file with the added task, print feedback to user, then return
                 char *json_str = cJSON_Print(jsonString);
                 FILE *fptr1 = fopen("tasks.json", "w");
                 fprintf(fptr1, json_str);
@@ -122,8 +162,8 @@ int main(int argc, char *argv[]) {
 
         // If the user puts no task name argument, show helper text
         if (argv[2] == NULL) {
-            printf("\n\tYou must enter a task title after the \"remove\" argument.\n");
-            printf("\n\tExample: tasktracker remove \"Your task name\"\n");
+            printf("\n\tYou must enter a task id after the \"remove\" argument.\n");
+            printf("\n\tExample: tasktracker remove 1\n");
             return 0;
         }
         // If the user inputs arguments properly, remove task from file
@@ -131,7 +171,7 @@ int main(int argc, char *argv[]) {
 
             // If the file doesn't exist, print a warn the user
             if (fopen("tasks.json", "r") == NULL) {
-                printf("\tThere are no file with saved tasks.\n");
+                printf("\tThere are no tasks to delete\n");
             }
             // If the file exists, remove task from file
             else {
@@ -142,7 +182,7 @@ int main(int argc, char *argv[]) {
 
                 // Go through task objects and find one with a specific ID inputed by the user
                 int arrSize = cJSON_GetArraySize(jsonString);
-                int deleteTarget = atoi(argv[2]);                   // The task ID the user inputted to be deleted
+                int deleteTarget = atoi(argv[2]);
                 for (int i = 0; i < arrSize; i++) {
 
                     // Checks the id of the current object in the loop
@@ -163,7 +203,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // If no task with given id is found, print feedback to user and quit
-                printf("\tError: No task found with the given ID.\n");
+                printf("\tNo task found with the given ID. Try again\n");
                 return 0;
             }
         }
