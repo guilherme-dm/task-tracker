@@ -208,7 +208,68 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    // If the user puts the "mark-done" argument, execute logic 
+    else if (strcmp(argv[1], "mark-done") == 0) {
 
+        // If the user puts no task name argument, show helper text
+        if (argv[2] == NULL) {
+            printf("\n\tYou must enter a task id after the \"mark-done\" argument.\n");
+            printf("\n\tExample: tasktracker mark-done 1\n");
+            return 0;
+        }
+        // If the user inputs arguments properly, mark-done task from file
+        else {
+
+            // If the file doesn't exist, print a warn the user
+            if (fopen("tasks.json", "r") == NULL) {
+                printf("\tThere are no tasks to mark as done\n");
+            }
+            // If the file exists, mark as done a specific task from file
+            else {
+                
+                // Parses the json file into a cjson object to be edited
+                char *fptr = fileToString("tasks.json");
+                cJSON *jsonString = cJSON_Parse(fptr);
+
+                // Go through task objects and find one with a specific ID inputed by the user
+                int arrSize = cJSON_GetArraySize(jsonString);
+                int taskTarget = atoi(argv[2]);
+                for (int i = 0; i < arrSize; i++) {
+
+                    // Checks the id of the current object in the loop
+                    cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                    cJSON *id_key = cJSON_GetObjectItemCaseSensitive(obj, "task-id");
+
+                    // If it matches the id the user inputted, get the object, change the status value, and then prints feedback to user, then returns
+                    if (taskTarget == id_key->valueint) {
+                        // Get the task object 
+                        cJSON *status = cJSON_GetObjectItemCaseSensitive(obj, "status");
+
+                        // Create the new string value with the status to be saved
+                        cJSON *string = cJSON_CreateString("done");
+
+                        // Replaces the status with "done"
+                        cJSON_ReplaceItemInObject(obj, "status", string);
+
+                        // Puts the edited task object back on the JSON array
+                        cJSON_ReplaceItemInArray(jsonString, i, obj);
+                        
+                        // Rewrites the file to update its contents 
+                        char *json_str = cJSON_Print(jsonString);
+                        FILE *fptr = fopen("tasks.json", "w");
+                        fprintf(fptr, json_str);
+
+                        printf("\tTask with id %d marked as done.\n", taskTarget);
+                        return 0;
+                    } 
+                }
+
+                // If no task with given id is found, print feedback to user and quit
+                printf("\tNo task found with the given ID. Try again\n");
+                return 0;
+            }
+        }
+    }
     return 0;
 }
 
