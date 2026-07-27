@@ -15,13 +15,20 @@ int main(int argc, char *argv[]) {
 
         printf("\n\tArguments/Options:\n");
         printf("\t  list\t\t\t\tLists all tasks\n");
+        printf("\t  list <TASKSTATUS>\t\tShow only tasks with the chosen status\n");
         printf("\t  add <TASKTITLE>\t\tAdds a task with the chosen title.\n");
         printf("\t  remove <TASKID>\t\tRemoves the task with the chosen ID.\n");
+        printf("\t  mark-to-do <TASKID>\t\tChange task status to to-do.\n");
+        printf("\t  mark-doing <TASKID>\t\tChange task status to doing.\n");
+        printf("\t  mark-done <TASKID>\t\tChange task status to done.\n");
 
         printf("\n\tExamples:\n");
         printf("\t  tasktracker list\n");
         printf("\t  tasktracker add \"Wash clothes\"\n");
         printf("\t  tasktracker remove 1\n");
+        printf("\t  tasktracker mark-to-do 1\n");
+        printf("\t  tasktracker mark-doing 1\n");
+        printf("\t  tasktracker mark-done 1\n");
 
         return 0;
     }
@@ -30,9 +37,88 @@ int main(int argc, char *argv[]) {
         // If the file doesn't exist, print a warning to the user
         if (fopen("tasks.json", "r") == NULL) {
             printf("\tThere are no saved tasks.\n");
+            return 0;
         }
-        // Otherwise, list tasks
+        // If the file exists and there's additional arguments, filter by status
+        else if (argc >= 3 && strcmp(argv[2], "to-do") == 0) {
+
+            char *fptr = fileToString("tasks.json");
+            cJSON *jsonString = cJSON_Parse(fptr); 
+
+            // Prints "table headers" for the tasks to be printed below
+            printf("\n\t\tID   Task                                         Status   Created\n");
+            printf("\t\t-------------------------------------------------------------------------------\n");
+
+            int arrSize = cJSON_GetArraySize(jsonString);
+            for (int i = 0; i < arrSize; i++) {
+                // Iterate over every array object
+                cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                cJSON *status = cJSON_GetObjectItem(obj, "status");
+
+                // If this current object status is to-do, get the remaining properties, then print its contents
+                if (strcmp(status->valuestring, "to-do") == 0) {
+                    cJSON *id = cJSON_GetObjectItem(obj, "task-id");
+                    cJSON *title = cJSON_GetObjectItem(obj, "title");
+                    cJSON *createdAt = cJSON_GetObjectItem(obj, "createdAt");
+
+                    printf("\t\t%-5d%-45.43s%-9s%s\n", id->valueint, title->valuestring, status->valuestring, createdAt->valuestring);
+                }
+            }
+        }
+        else if (argc >= 3 && strcmp(argv[2], "doing") == 0) {
+            char *fptr = fileToString("tasks.json");
+            cJSON *jsonString = cJSON_Parse(fptr); 
+
+            // Prints "table headers" for the tasks to be printed below
+            printf("\n\t\tID   Task                                         Status   Created\n");
+            printf("\t\t-------------------------------------------------------------------------------\n");
+
+            int arrSize = cJSON_GetArraySize(jsonString);
+            for (int i = 0; i < arrSize; i++) {
+                // Iterate over every array object
+                cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                cJSON *status = cJSON_GetObjectItem(obj, "status");
+
+                // If this current object status is to-do, get the remaining properties, then print its contents
+                if (strcmp(status->valuestring, "doing") == 0) {
+                    cJSON *id = cJSON_GetObjectItem(obj, "task-id");
+                    cJSON *title = cJSON_GetObjectItem(obj, "title");
+                    cJSON *createdAt = cJSON_GetObjectItem(obj, "createdAt");
+
+                    printf("\t\t%-5d%-45.43s%-9s%s\n", id->valueint, title->valuestring, status->valuestring, createdAt->valuestring);
+                }
+            }
+        }
+        else if (argc >= 3 && strcmp(argv[2], "done") == 0) {
+            char *fptr = fileToString("tasks.json");
+            cJSON *jsonString = cJSON_Parse(fptr); 
+
+            // Prints "table headers" for the tasks to be printed below
+            printf("\n\t\tID   Task                                         Status   Created\n");
+            printf("\t\t-------------------------------------------------------------------------------\n");
+
+            int arrSize = cJSON_GetArraySize(jsonString);
+            for (int i = 0; i < arrSize; i++) {
+                // Iterate over every array object
+                cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                cJSON *status = cJSON_GetObjectItem(obj, "status");
+
+                // If this current object status is to-do, get the remaining properties, then print its contents
+                if (strcmp(status->valuestring, "done") == 0) {
+                    cJSON *id = cJSON_GetObjectItem(obj, "task-id");
+                    cJSON *title = cJSON_GetObjectItem(obj, "title");
+                    cJSON *createdAt = cJSON_GetObjectItem(obj, "createdAt");
+
+                    printf("\t\t%-5d%-45.43s%-9s%s\n", id->valueint, title->valuestring, status->valuestring, createdAt->valuestring);
+                }
+            }
+        }
+        // Otherwise, just list all tasks
         else {
+
+            if (argc >= 3) {
+                printf("\n\tTask status \"%s\" doesn't exist. Listing all tasks\n", argv[2]);
+            }
 
             // Parses the json file into a cjson object to be iterated and printed
             char *fptr = fileToString("tasks.json");
@@ -57,7 +143,7 @@ int main(int argc, char *argv[]) {
                 printf("\t\t%-5d%-45.43s%-9s%s\n", id->valueint, title->valuestring, status->valuestring, createdAt->valuestring);
                 
             }
-
+            
             return 0;
         }
     }
