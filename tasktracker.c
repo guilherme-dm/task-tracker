@@ -294,6 +294,61 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    // If the user puts the "update" argument, execute logic
+    else if (strcmp(argv[1], "update") == 0) {
+
+        if (!argv[2]) {
+            printf("\n\tYou must enter a task id after the \"update\" argument, and then the new task title\n");
+            printf("\n\tExample: tasktracker update 1 \"Your new task name\"\n");
+            return 0;
+        } else if (!argv[3]) {
+            printf("\n\tYou must enter the new task name after the id argument\n");
+            printf("\n\tExample: tasktracker update 1 \"Your new task name\"\n");
+            return 0;
+        } else {
+
+            char *fptr = fileToString("tasks.json");
+            cJSON *jsonString = cJSON_Parse(fptr);
+
+            int arrSize = cJSON_GetArraySize(jsonString);
+            for (int i = 0; i < arrSize; i++) {
+
+                // Checks the id of the current object in the loop
+                cJSON *obj = cJSON_GetArrayItem(jsonString, i);
+                cJSON *id = cJSON_GetObjectItem(obj, "task-id");
+
+                // If it matches the id the user inputted, get the object, change the title value, and then prints feedback to user, then returns
+                if (id->valueint == atoi(argv[2])) {
+                    // Get the task title
+                    cJSON *title = cJSON_GetObjectItem(obj, "title");
+
+                    // Create the new title from the user input 
+                    cJSON *newTitle = cJSON_CreateString(argv[3]);
+
+                    // Replaces the title with the what the user inputed
+                    cJSON_ReplaceItemInObject(obj, "title", newTitle);
+
+                    // Puts the edited task object back on the JSON array 
+                    cJSON_ReplaceItemInArray(jsonString, i, obj);
+
+                    // Rewrites the file to update its contents
+                    char *json_str = cJSON_Print(jsonString);
+                    FILE *fptr1 = fopen("tasks.json", "w");
+                    fprintf(fptr1, json_str);
+                    
+                    printf("\tTask \"%s\" updated\n", argv[2]);
+                    return 0;
+                }
+
+            }
+
+        }
+
+
+
+
+
+    } 
     // If the user puts the "mark-done" argument, execute logic 
     else if (strcmp(argv[1], "mark-done") == 0) {
 
